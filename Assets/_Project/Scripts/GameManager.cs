@@ -32,14 +32,14 @@ public class GameManager : MonoBehaviour
         IsPlaying = true;
         Time.timeScale = 1f;
 
-        gameOverPanel.SetActive(false);
-        restartButton.onClick.AddListener(Restart);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (restartButton != null) restartButton.onClick.AddListener(Restart);
     }
 
     private void OnEnable()
     {
-        spawner.EnemyDied += OnEnemyDied;
-        playerHealth.Died += OnPlayerDied;
+        if (spawner != null) spawner.EnemyDied += OnEnemyDied;
+        if (playerHealth != null) playerHealth.Died += OnPlayerDied;
     }
 
     private void OnDisable()
@@ -59,11 +59,14 @@ public class GameManager : MonoBehaviour
         if (!IsPlaying) return;
         IsPlaying = false;
 
-        AudioManager.Instance.StopMusic();
-        AudioManager.Instance.PlayGameOver();
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopMusic();
+            AudioManager.Instance.PlayGameOver();
+        }
 
-        finalScoreText.text = "Puntaje final: " + score;
-        gameOverPanel.SetActive(true);
+        if (finalScoreText != null) finalScoreText.text = "Puntaje final: " + score;
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
         Time.timeScale = 0f;
     }
 

@@ -14,13 +14,40 @@ public class PlayerShooter : MonoBehaviour
         if (Input.GetMouseButton(0) && Time.time >= nextShotTime)
         {
             Shoot();
-            nextShotTime = Time.time + 1f / fireRate;
+            nextShotTime = Time.time + 1f / Mathf.Max(0.1f, fireRate);
         }
     }
 
     private void Shoot()
     {
-        Instantiate(projectilePrefab, muzzle.position, muzzle.rotation);
-        AudioManager.Instance.PlayShoot();
+        if (projectilePrefab == null)
+        {
+            Debug.LogWarning("PlayerShooter: falta asignar Projectile Prefab en el Inspector.", this);
+            return;
+        }
+
+        if (muzzle == null)
+        {
+            Debug.LogWarning("PlayerShooter: falta asignar Muzzle en el Inspector.", this);
+            return;
+        }
+
+        Projectile projectile = Instantiate(projectilePrefab, muzzle.position, muzzle.rotation);
+        if (projectile == null) return;
+
+        Collider[] projectileColliders = projectile.GetComponentsInChildren<Collider>();
+        Collider[] shooterColliders = GetComponentsInChildren<Collider>();
+        foreach (Collider projectileCollider in projectileColliders)
+        {
+            if (projectileCollider == null) continue;
+            foreach (Collider shooterCollider in shooterColliders)
+            {
+                if (shooterCollider != null)
+                    Physics.IgnoreCollision(projectileCollider, shooterCollider, true);
+            }
+        }
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayShoot();
     }
 }

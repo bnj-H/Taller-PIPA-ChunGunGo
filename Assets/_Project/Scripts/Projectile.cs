@@ -21,7 +21,23 @@ public class Projectile : MonoBehaviour
 
         if (collision.collider.TryGetComponent(out IDamageable target))
         {
-            if (target.TakeDamage(damage))
+            ContactPoint contact = collision.contactCount > 0
+                ? collision.GetContact(0)
+                : default;
+
+            Vector3 hitPoint = collision.contactCount > 0
+                ? contact.point
+                : collision.collider.ClosestPoint(transform.position);
+
+            Vector3 hitNormal = collision.contactCount > 0
+                ? contact.normal
+                : -transform.forward;
+
+            DamageImpactVFX.Play(hitPoint, hitNormal);
+
+            // Mantiene el sonido de impacto también cuando el golpe es letal.
+            target.TakeDamage(damage);
+            if (AudioManager.Instance != null)
                 AudioManager.Instance.PlayHit();
         }
 

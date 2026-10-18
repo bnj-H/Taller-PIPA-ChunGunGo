@@ -18,7 +18,7 @@ public class HUD : MonoBehaviour
         waveText.text = wave == 0 ? "Prepárate..." : "Oleada " + wave;
 
         Health player = gm.PlayerHealth;
-        int hp = player != null ? player.Current : 0;
-        healthText.text = "Vida: " + hp;
+        float hp = player != null ? player.Current : 0f;
+        healthText.text = "Vida: " + hp.ToString("0.#");
     }
 }

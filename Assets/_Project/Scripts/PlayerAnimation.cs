@@ -16,6 +16,8 @@ public class PlayerAnimation : MonoBehaviour
 
     private void Update()
     {
+        if (rb == null || animator == null) return;
+
         Vector3 v = rb.velocity;
         v.y = 0f;
         animator.SetFloat(SpeedHash, v.magnitude);
