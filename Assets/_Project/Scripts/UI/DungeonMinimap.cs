@@ -18,6 +18,8 @@ public class DungeonMinimap : MonoBehaviour
     [Header("Cell Settings")]
     [SerializeField] private float cellSize = 22f;
     [SerializeField] private float cellSpacing = 8f;
+    [SerializeField] private float mapPadding = 12f;
+    [SerializeField] private float minimumCellSize = 8f;
 
     [Header("Colors")]
     [SerializeField] private Color currentRoomColor = new Color(0.15f, 0.85f, 1f, 1f);
@@ -29,31 +31,45 @@ public class DungeonMinimap : MonoBehaviour
     private readonly Dictionary<Vector2Int, Image> cellImages = new Dictionary<Vector2Int, Image>();
     private readonly Dictionary<Vector2Int, TMP_Text> cellLabels = new Dictionary<Vector2Int, TMP_Text>();
     private bool initialized;
+    private DungeonManager subscribedManager;
+    private float lastMapWidth;
+    private float lastMapHeight;
 
     private void Start()
     {
-        if (DungeonManager.Instance != null)
-        {
-            DungeonManager.Instance.RoomEntered += OnRoomEntered;
-            DungeonManager.Instance.RoomCleared += OnRoomCleared;
-        }
-
+        SubscribeToDungeonManager();
         CreateMinimapUI();
     }
 
     private void OnDestroy()
     {
-        if (DungeonManager.Instance != null)
+        if (subscribedManager != null)
         {
-            DungeonManager.Instance.RoomEntered -= OnRoomEntered;
-            DungeonManager.Instance.RoomCleared -= OnRoomCleared;
+            subscribedManager.RoomEntered -= OnRoomEntered;
+            subscribedManager.RoomCleared -= OnRoomCleared;
+            subscribedManager = null;
         }
+    }
+
+    private void SubscribeToDungeonManager()
+    {
+        DungeonManager manager = DungeonManager.Instance;
+        if (manager == null || manager == subscribedManager) return;
+
+        if (subscribedManager != null)
+        {
+            subscribedManager.RoomEntered -= OnRoomEntered;
+            subscribedManager.RoomCleared -= OnRoomCleared;
+        }
+
+        subscribedManager = manager;
+        subscribedManager.RoomEntered += OnRoomEntered;
+        subscribedManager.RoomCleared += OnRoomCleared;
     }
 
     public void CreateMinimapUI()
     {
         if (initialized || DungeonManager.Instance == null) return;
-        initialized = true;
 
         if (mapContainer == null)
         {
@@ -61,7 +77,15 @@ public class DungeonMinimap : MonoBehaviour
         }
 
         IReadOnlyDictionary<Vector2Int, DungeonRoom> allRooms = DungeonManager.Instance.AllRooms;
+        if (allRooms.Count == 0) return;
+
+        initialized = true;
         Vector2Int finalCoord = DungeonManager.Instance.FinalRoomCoord;
+
+        if (mapContainer.GetComponent<RectMask2D>() == null)
+        {
+            mapContainer.gameObject.AddComponent<RectMask2D>();
+        }
 
         // Clear previous children
         for (int i = mapContainer.childCount - 1; i >= 0; i--)
@@ -74,8 +98,6 @@ public class DungeonMinimap : MonoBehaviour
         cellImages.Clear();
         cellLabels.Clear();
 
-        float step = cellSize + cellSpacing;
-
         foreach (KeyValuePair<Vector2Int, DungeonRoom> pair in allRooms)
         {
             Vector2Int coord = pair.Key;
@@ -85,8 +107,11 @@ public class DungeonMinimap : MonoBehaviour
             cellObj.transform.SetParent(mapContainer, false);
 
             RectTransform rt = cellObj.AddComponent<RectTransform>();
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(cellSize, cellSize);
-            rt.anchoredPosition = new Vector2(coord.x * step, coord.y * step);
+            rt.anchoredPosition = Vector2.zero;
 
             Image img = cellObj.AddComponent<Image>();
             img.color = undiscoveredColor;
@@ -107,21 +132,94 @@ public class DungeonMinimap : MonoBehaviour
             if (coord == Vector2Int.zero)
                 label.text = "S";
             else if (coord == finalCoord)
-                label.text = "★";
+                label.text = "F";
             else
                 label.text = "";
 
             cellLabels.Add(coord, label);
         }
 
+        LayoutMinimap(allRooms);
         RefreshMinimap();
+    }
+
+    private void LayoutMinimap(IReadOnlyDictionary<Vector2Int, DungeonRoom> allRooms)
+    {
+        if (allRooms.Count == 0 || mapContainer == null) return;
+
+        int minX = int.MaxValue;
+        int maxX = int.MinValue;
+        int minY = int.MaxValue;
+        int maxY = int.MinValue;
+
+        foreach (KeyValuePair<Vector2Int, DungeonRoom> pair in allRooms)
+        {
+            Vector2Int coord = pair.Key;
+            minX = Mathf.Min(minX, coord.x);
+            maxX = Mathf.Max(maxX, coord.x);
+            minY = Mathf.Min(minY, coord.y);
+            maxY = Mathf.Max(maxY, coord.y);
+        }
+
+        Vector2 center = new Vector2((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
+        float spanX = maxX - minX;
+        float spanY = maxY - minY;
+
+        Rect containerRect = mapContainer.rect;
+        float availableWidth = Mathf.Max(20f, containerRect.width - mapPadding * 2f);
+        float availableHeight = Mathf.Max(20f, containerRect.height - mapPadding * 2f);
+
+        float nominalWidth = spanX * (cellSize + cellSpacing) + cellSize;
+        float nominalHeight = spanY * (cellSize + cellSpacing) + cellSize;
+        float scale = 1f;
+
+        if (nominalWidth > availableWidth)
+            scale = Mathf.Min(scale, availableWidth / nominalWidth);
+        if (nominalHeight > availableHeight)
+            scale = Mathf.Min(scale, availableHeight / nominalHeight);
+
+        float scaledCellSize = Mathf.Clamp(cellSize * scale, minimumCellSize, cellSize);
+        float scaledSpacing = Mathf.Clamp(cellSpacing * scale, 2f, cellSpacing);
+        float step = scaledCellSize + scaledSpacing;
+
+        foreach (KeyValuePair<Vector2Int, DungeonRoom> pair in allRooms)
+        {
+            Vector2Int coord = pair.Key;
+            if (!cellImages.TryGetValue(coord, out Image image)) continue;
+
+            RectTransform rect = image.rectTransform;
+            rect.sizeDelta = new Vector2(scaledCellSize, scaledCellSize);
+            rect.anchoredPosition = new Vector2((coord.x - center.x) * step, (coord.y - center.y) * step);
+
+            if (cellLabels.TryGetValue(coord, out TMP_Text label))
+            {
+                RectTransform labelRect = label.rectTransform;
+                labelRect.sizeDelta = new Vector2(scaledCellSize, scaledCellSize);
+                label.fontSize = Mathf.Clamp(scaledCellSize * 0.5f, 7f, 11f);
+            }
+        }
+
+        lastMapWidth = containerRect.width;
+        lastMapHeight = containerRect.height;
     }
 
     private void Update()
     {
+        SubscribeToDungeonManager();
+
         if (!initialized && DungeonManager.Instance != null && DungeonManager.Instance.AllRooms.Count > 0)
         {
             CreateMinimapUI();
+        }
+
+        if (initialized && DungeonManager.Instance != null)
+        {
+            Rect rect = mapContainer.rect;
+            if (!Mathf.Approximately(rect.width, lastMapWidth) ||
+                !Mathf.Approximately(rect.height, lastMapHeight))
+            {
+                LayoutMinimap(DungeonManager.Instance.AllRooms);
+            }
         }
 
         // Pulse the current room icon
