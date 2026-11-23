@@ -15,6 +15,7 @@
 *.sln
 *.user
 *.suo
+*.vsconfig
 
 # Operating system
 .DS_Store
