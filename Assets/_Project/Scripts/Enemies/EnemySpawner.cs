@@ -48,6 +48,14 @@ public class EnemySpawner : MonoBehaviour
 
     private void Start()
     {
+        // Main now uses DungeonManager's room encounters. Keep the wave spawner as
+        // a fallback for scenes that do not contain a dungeon, never run both.
+        if (DungeonManager.Instance != null)
+        {
+            enabled = false;
+            return;
+        }
+
         if (spawnGroundMask.value == 0)
             spawnGroundMask = LayerMask.GetMask("Ground");
         worldChunks = FindObjectOfType<WorldChunkManager>();

@@ -14,6 +14,7 @@ public class Health : MonoBehaviour, IDamageable
     public float Max => maxHealth;
     public bool FellOff { get; private set; }
     public event Action<Health> Died;
+    public event Action<Health> HealthChanged;
 
     private bool dead;
 
@@ -22,7 +23,8 @@ public class Health : MonoBehaviour, IDamageable
         maxHealth = Mathf.Max(0.1f, maxHealth);
         current = maxHealth;
 
-        if (GetComponent<WorldHealthBar>() == null)
+        // Enemy bars remain world-space; the player uses the screen HUD only.
+        if (!CompareTag("Player") && GetComponent<WorldHealthBar>() == null)
             gameObject.AddComponent<WorldHealthBar>();
     }
 
@@ -45,11 +47,32 @@ public class Health : MonoBehaviour, IDamageable
         if (current <= 0f)
         {
             current = 0f;
+            HealthChanged?.Invoke(this);
             Die();
             return false;
         }
 
+        HealthChanged?.Invoke(this);
         return true;
+    }
+
+    /// <summary>Restores health without exceeding the configured maximum.</summary>
+    public float Heal(float amount)
+    {
+        if (dead || amount <= 0f || current >= maxHealth) return 0f;
+        float previous = current;
+        current = Mathf.Min(maxHealth, current + amount);
+        float restored = current - previous;
+        if (restored > 0f) HealthChanged?.Invoke(this);
+        return restored;
+    }
+
+    /// <summary>Used by enemy variants to tune durability without replacing Health.</summary>
+    public void SetMaximum(float value, bool refill)
+    {
+        maxHealth = Mathf.Max(0.1f, value);
+        current = refill ? maxHealth : Mathf.Min(current, maxHealth);
+        HealthChanged?.Invoke(this);
     }
 
     private void Die()

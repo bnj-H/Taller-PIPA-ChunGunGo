@@ -7,6 +7,8 @@ public class EnemyContactDamage : MonoBehaviour
 
     private float nextHitTime;
 
+    public void SetDamage(int value) => damage = Mathf.Max(0, value);
+
     private void OnCollisionStay(Collision collision)
     {
         if (Time.time < nextHitTime) return;

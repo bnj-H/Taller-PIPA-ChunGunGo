@@ -26,6 +26,7 @@ public class DungeonManager : MonoBehaviour
 
     [Header("Prefabs & Materials")]
     [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private GameObject healthPickupPrefab;
     [SerializeField] private GameObject treePrefab;
     [SerializeField] private GameObject bushPrefab;
     [SerializeField] private GameObject rockPrefab;
@@ -78,6 +79,9 @@ public class DungeonManager : MonoBehaviour
         if (enemyPrefab == null)
             enemyPrefab = Resources.Load<GameObject>("Enemies/Enemy") ??
                           AssetDatabaseLoad<GameObject>("Assets/_Project/Prefabs/Enemies/Enemy.prefab");
+
+        if (healthPickupPrefab == null)
+            healthPickupPrefab = AssetDatabaseLoad<GameObject>("Assets/_Project/Prefabs/Collectibles/HealthPickup.prefab");
 
         if (treePrefab == null)
             treePrefab = AssetDatabaseLoad<GameObject>("Assets/_Project/Art/Environment/Nature/Tree.fbx");
@@ -230,6 +234,9 @@ public class DungeonManager : MonoBehaviour
         // Room dressing (decorations)
         DressRoom(roomObj, coord, type);
 
+        if (type == RoomType.Combat || type == RoomType.Final)
+            SpawnRecoveryItems(roomObj, coord, type);
+
         // Visual Presentation Banners
         if (type == RoomType.Start)
         {
@@ -243,6 +250,25 @@ public class DungeonManager : MonoBehaviour
         }
 
         rooms.Add(coord, roomComponent);
+    }
+
+    private void SpawnRecoveryItems(GameObject roomObj, Vector2Int coord, RoomType type)
+    {
+        if (healthPickupPrefab == null) return;
+
+        int count = type == RoomType.Final ? 2 : 1;
+        // Fixed safe pads keep pickups away from the room corners and central
+        // cover while a coordinate-based offset gives each room a different layout.
+        float side = ((coord.x + coord.y) & 1) == 0 ? 1f : -1f;
+        for (int i = 0; i < count; i++)
+        {
+            float x = i == 0 ? 0f : 4f * side;
+            float z = (i == 0 ? -5f : 4f) * (((coord.x - coord.y) & 1) == 0 ? 1f : -1f);
+            GameObject pickup = Instantiate(healthPickupPrefab, roomObj.transform);
+            pickup.name = "HealthPickup";
+            pickup.transform.localPosition = new Vector3(x, 0.65f, z);
+            pickup.transform.localRotation = Quaternion.identity;
+        }
     }
 
     private void CreateRoomBanner(GameObject parent, string title, string subtitle)

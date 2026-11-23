@@ -20,6 +20,9 @@ public class PlayerController : MonoBehaviour
     private Vector3 moveInput;
     private Vector3 aimDirection;
 
+    /// <summary>Current horizontal world-space direction selected by the aim input.</summary>
+    public Vector3 AimDirection => aimDirection.sqrMagnitude > 0.001f ? aimDirection.normalized : transform.forward;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();

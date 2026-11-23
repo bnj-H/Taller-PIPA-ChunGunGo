@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 6461716719531829071}
   - component: {fileID: 4865909441534111634}
   - component: {fileID: -1586025460781913501}
+  - component: {fileID: 5620464792858007939}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Untagged
@@ -148,11 +149,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b18a6a9281fd894eaa26bcd3de3d5ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   speed: 3
   stunTime: 0.4
   stopChaseBelowY: -4.5
+  lookAheadDistance: 2.2
+  avoidanceRadius: 0.48
+  turnRate: 420
+  steeringRefreshInterval: 0.12
+  stopDistance: 0.25
+  stuckCheckInterval: 0.6
+  stuckRecoveryTime: 0.75
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!114 &6461716719531829071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163,8 +174,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f211b40867f74943ae2caa13521434f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   maxHealth: 3
   killY: -5
   current: 0
@@ -178,8 +189,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b1fe5bb7e989934e9255ea70ad3c2a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   damage: 1
   cooldown: 1
 --- !u!114 &-1586025460781913501
@@ -192,9 +203,42 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 418a9c5ee2305ec46a903039f693d608, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   isPlayer: 0
+--- !u!114 &5620464792858007939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3660441442303256848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fdf8055ee3639842a4c314a74315605, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  visualPrefabs:
+  - {fileID: 919132149155446097, guid: 53f658d0db307bd48888fdf337471006, type: 3}
+  - {fileID: 919132149155446097, guid: 50e7c9d711c65094ba6fe6611028a372, type: 3}
+  - {fileID: 919132149155446097, guid: 706382db357f0a14c88f65f5fc4cc692, type: 3}
+  - {fileID: 919132149155446097, guid: fe7854904af215f4b8cf66a4e93dac44, type: 3}
+  visualHeights:
+  - 1.38
+  - 1.45
+  - 1.34
+  - 1.32
+  movementSpeeds:
+  - 3
+  - 4.4
+  - 3.55
+  - 2.5
+  healthValues:
+  - 3
+  - 2
+  - 4
+  - 5
+  contactDamages: 01000000010000000100000002000000
 --- !u!1001 &4350163239847208900
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -276,7 +320,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
-  m_WarningMessage: 
+  m_WarningMessage:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -286,5 +330,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 56c7af8f41c60ca439f15233529c004f, type: 3}
   m_PrefabInstance: {fileID: 4350163239847208900}
   m_PrefabAsset: {fileID: 0}
-
-

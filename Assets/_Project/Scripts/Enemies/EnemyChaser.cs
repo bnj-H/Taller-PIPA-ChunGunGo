@@ -39,6 +39,8 @@ public class EnemyChaser : MonoBehaviour, IKnockbackable
 
     private void Start() => FindTarget();
 
+    public void SetMovementSpeed(float value) => speed = Mathf.Max(0f, value);
+
     private void FindTarget()
     {
         GameObject player = GameObject.FindWithTag("Player");
